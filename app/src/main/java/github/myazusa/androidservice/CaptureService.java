@@ -26,6 +26,7 @@ import android.os.Looper;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.WindowManager;
+import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
@@ -95,9 +96,14 @@ public class CaptureService extends Service {
         int resultCode = intent.getIntExtra("resultCode", Activity.RESULT_OK);
         Intent data = intent.getParcelableExtra("data");
         MediaProjectionManager mediaProjectionManager = (MediaProjectionManager) getSystemService(MEDIA_PROJECTION_SERVICE);
-        mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
-        // 绑定两个service
-        bindService(new Intent(this, FloatingWindowsService.class), connection, Context.BIND_IMPORTANT);
+        if (data == null){
+            Toast.makeText(this,"mediaProjection获取失败",Toast.LENGTH_SHORT).show();
+            onDestroy();
+        }else {
+            mediaProjection = mediaProjectionManager.getMediaProjection(resultCode, data);
+            // 绑定两个service
+            bindService(new Intent(this, FloatingWindowsService.class), connection, Context.BIND_IMPORTANT);
+        }
         return START_STICKY;
     }
     private void startCaptureTask() {
