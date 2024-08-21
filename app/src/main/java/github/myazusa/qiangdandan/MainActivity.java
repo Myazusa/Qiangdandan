@@ -28,7 +28,6 @@ public class MainActivity extends AppCompatActivity {
     private static final String _TAG = MainActivity.class.getName();
     private static boolean isOpencvReady = false;
     private static final int SCREEN_CAPTURE_REQUEST_CODE = 1410;
-    private Intent screenCaptureIntent = null;
     private ActivityMainBinding _binding;
 
     static {
