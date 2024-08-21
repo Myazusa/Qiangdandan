@@ -134,27 +134,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 检查是否有录屏权限
-     * @return 有则true
-     */
-//    private boolean checkMediaProjectionPermission() {
-//        MediaProjectionManager mediaProjectionManager =
-//                (MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE);
-//        return mediaProjectionManager != null;
-//    }
-
-    /**
-     * 请求录屏权限
-     */
-//    private void requestMediaProjectionPermission(){
-//        if (!checkMediaProjectionPermission()) {
-//            startActivity(((MediaProjectionManager) getSystemService(Context.MEDIA_PROJECTION_SERVICE)).createScreenCaptureIntent());
-//        }else {
-//            requestAccessibilityPermission();
-//        }
-//    }
-
-    /**
      * 退出所有Activity，但不会关闭已启动的service
      */
     private void exit(){
