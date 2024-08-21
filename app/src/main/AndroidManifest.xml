@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"/>
+
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <provider android:authorities="list" />
+    </queries>
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@drawable/accessible_forward_fill__streamline_outlined_fill___material_symbols"
+        android:label="@string/app_name"
+        android:roundIcon="@drawable/accessible_forward_fill__streamline_outlined_fill___material_symbols"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Qiangdandan"
+        tools:targetApi="31">
+        <activity android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <service android:name="github.myazusa.androidservice.QAccessibilityService"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE"
+            android:theme="@style/Theme.Qiangdandan"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/accessibility_service_config" />
+        </service>
+        <service
+            android:name="github.myazusa.androidservice.FloatingWindowsService"
+            android:exported="true">
+        </service>
+        <service
+            android:name="github.myazusa.androidservice.CaptureService"
+            android:exported="true"
+            android:permission="android.permission.BIND_REMOTEVIEWS"
+            android:foregroundServiceType="mediaProjection">
+        </service>
+    </application>
+</manifest>
