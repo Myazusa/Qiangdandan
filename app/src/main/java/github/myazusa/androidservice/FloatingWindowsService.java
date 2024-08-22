@@ -28,6 +28,7 @@ import androidx.annotation.Nullable;
 import java.util.Optional;
 
 import github.myazusa.enums.ToggleStateEnum;
+import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.R;
 import github.myazusa.service.ImageRecognition;
 import github.myazusa.view.ToggleButton;
@@ -194,20 +195,7 @@ public class FloatingWindowsService extends Service {
         ToggleButton closeButton = floatingView.findViewById(R.id.closeButton);
         closeButton.setOnClickListener(l -> {
             if(closeButton.isButtonState() == ToggleStateEnum.Default){
-                // 移除悬浮窗
-                windowManager.removeView(floatingView);
-                // 发送消息，让截屏服务也停止
-                sendData();
-                // 停止此服务
-                if (captureService != null){
-                    unbindService(connection);
-                    captureService=null;
-                    Log.i(TAG,"FloatingWindowsService已和截屏服务断开连接");
-                }
-                QAccessibilityService.getInstance().onInterrupt();
-                Log.i(TAG,"无障碍服务已停止");
-                Log.i(TAG,"----悬浮窗服务已释放完毕----");
-                stopSelf();
+                onDestroy();
             }
         });
     }
@@ -246,5 +234,24 @@ public class FloatingWindowsService extends Service {
     @Override
     public IBinder onBind(Intent intent) {
         return floatingWindowsServiceBinder;
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        // 移除悬浮窗
+        windowManager.removeView(floatingView);
+        // 发送消息，让截屏服务也停止
+        sendData();
+        // 停止此服务
+        if (captureService != null){
+            unbindService(connection);
+            captureService=null;
+            Log.i(TAG,"FloatingWindowsService已和截屏服务断开连接");
+        }
+        QAccessibilityService.getInstance().onInterrupt();
+        Log.i(TAG,"无障碍服务已停止");
+        Log.i(TAG,"----悬浮窗服务已释放完毕----");
+        LogsFileIO.writeLogsToExternal(this);
     }
 }

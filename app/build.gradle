@@ -11,7 +11,7 @@ android {
         minSdk 24
         targetSdk 34
         versionCode 1
-        versionName "1.0.0"
+        versionName "1.1.0"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -47,7 +47,7 @@ dependencies {
     testImplementation libs.junit
     testImplementation 'org.robolectric:robolectric:4.7.3'
     testImplementation 'androidx.test:core:1.4.0'
-    testImplementation 'org.opencv:opencv:4.10.0'  // 添加 OpenCV 的纯 Java 版本依赖
+    testImplementation 'org.opencv:opencv:4.10.0'
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     //implementation 'org.tensorflow:tensorflow-lite:2.16.1'

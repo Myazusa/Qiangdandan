@@ -1,9 +1,10 @@
 package github.myazusa.qiangdandan;
 
+import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Paint;
+import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
@@ -15,6 +16,11 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.button.MaterialButton;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -22,20 +28,26 @@ import java.util.List;
 
 import github.myazusa.androidservice.CaptureService;
 import github.myazusa.androidservice.FloatingWindowsService;
+import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.databinding.ActivityMainBinding;
+import github.myazusa.util.FragmentUtil;
+import github.myazusa.view.LogsFragment;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String _TAG = MainActivity.class.getName();
+    private static final String TAG = MainActivity.class.getName();
     private static boolean isOpencvReady = false;
     private static final int SCREEN_CAPTURE_REQUEST_CODE = 1410;
     private ActivityMainBinding _binding;
+    private Fragment logsFragment = null;
+    private Fragment optionFragment = null;
+    private Fragment helpFragment = null;
 
     static {
         if (!OpenCVLoader.initLocal()) {
-            Log.w(_TAG, "opencv加载失败");
+            Log.w(TAG, "opencv加载失败");
         }else {
             isOpencvReady = true;
-            Log.w(_TAG, "opencv加载成功");
+            Log.w(TAG, "opencv加载成功");
         }
     }
 
@@ -50,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
         _binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(_binding.getRoot());
 
+        createGlobalExceptionHandler();
+        createStartFloatingWindowsButtonSwitch();
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
@@ -57,12 +72,39 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "opencv未能正常加载", Toast.LENGTH_SHORT).show();
             exit();
         }
-        createStartFloatingWindowsButtonSwitch();
+
+        checkExternalPermission();
+        createLogsFragmentButton();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+    }
+    public void switchToFragment(String fragmentName){
+        if("logsFragment".equals(fragmentName)){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),logsFragment);
+        }
+        if("optionFragment".equals(fragmentName)){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),optionFragment);
+        }
+        if("helpFragment".equals(fragmentName)){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),helpFragment);
+        }
+        if(fragmentName == null){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),null);
+        }
+    }
+
+    private void createLogsFragmentButton(){
+        MaterialButton logsFragmentButton = findViewById(R.id.logsFragmentButton);
+        logsFragmentButton.setOnClickListener(l->{
+            if (logsFragment == null){
+                logsFragment = new LogsFragment();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragmentSlot, logsFragment).hide(logsFragment).commit();
+            }
+            switchToFragment("logsFragment");
+        });
     }
 
     /**
@@ -83,6 +125,12 @@ public class MainActivity extends AppCompatActivity {
                 requestOverlayPermission();
             }
         });
+    }
+    private void checkExternalPermission(){
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
     }
 
     /**
@@ -120,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         }
-        Log.i(_TAG, "无障碍权限未获取");
+        Log.i(TAG, "无障碍权限未获取");
         return false;
     }
 
@@ -153,10 +201,20 @@ public class MainActivity extends AppCompatActivity {
                 startService(captureServiceIntent);
             }
             startService(new Intent(getApplicationContext(), FloatingWindowsService.class));
-            Log.d(_TAG,"全部权限已获取，开启悬浮窗");
+            Log.d(TAG,"全部权限已获取，开启悬浮窗");
             finishAffinity();
         }else {
             Toast.makeText(this, "截屏权限未获取", Toast.LENGTH_SHORT).show();
         }
+    }
+    private void createGlobalExceptionHandler(){
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            // 处理未捕获的异常
+            Log.e(TAG, "出现未捕获的异常: " + t.getName(), e);
+            loggingException();
+        });
+    }
+    private void loggingException() {
+        LogsFileIO.writeLogsToExternal(this);
     }
 }
