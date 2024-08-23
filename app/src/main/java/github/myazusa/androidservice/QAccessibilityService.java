@@ -15,6 +15,7 @@ import android.view.accessibility.AccessibilityEvent;
 
 import java.util.Stack;
 
+import github.myazusa.config.ApplicationConfig;
 import github.myazusa.qiangdandan.R;
 
 public class QAccessibilityService extends AccessibilityService {
@@ -73,13 +74,13 @@ public class QAccessibilityService extends AccessibilityService {
         FloatingWindowsService.getWindowManager().addView(clickIndicator, params);
         clickIndicatorStack.push(clickIndicator);
 
-        // TODO: 这里可以反射出去作为setting
+
         // 延时移除点击标记
         new Handler().postDelayed(() -> {
             if (!clickIndicatorStack.isEmpty()) {
                 FloatingWindowsService.getWindowManager().removeView(clickIndicatorStack.pop());
             }
-        }, 500);
+        }, ApplicationConfig.getInstance().getPreferences().getInt("clickIndicatorDelayMillis",800));
     }
 
     @Override

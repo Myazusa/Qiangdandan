@@ -28,6 +28,7 @@ import java.util.List;
 
 import github.myazusa.androidservice.CaptureService;
 import github.myazusa.androidservice.FloatingWindowsService;
+import github.myazusa.config.ApplicationConfig;
 import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.databinding.ActivityMainBinding;
 import github.myazusa.util.FragmentUtil;
@@ -62,6 +63,12 @@ public class MainActivity extends AppCompatActivity {
         _binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(_binding.getRoot());
 
+        // 设置config初始值
+        ApplicationConfig.initApplicationConfig(this);
+        ApplicationConfig.
+                getInstance().
+                setDefaultPreferences(this,R.xml.default_preferences);
+
         createGlobalExceptionHandler();
         createStartFloatingWindowsButtonSwitch();
 
@@ -85,7 +92,7 @@ public class MainActivity extends AppCompatActivity {
         if("logsFragment".equals(fragmentName)){
             FragmentUtil.switchFragment(getSupportFragmentManager(),logsFragment);
         }
-        if("optionFragment".equals(fragmentName)){
+        if("optionsFragment".equals(fragmentName)){
             FragmentUtil.switchFragment(getSupportFragmentManager(),optionFragment);
         }
         if("helpFragment".equals(fragmentName)){

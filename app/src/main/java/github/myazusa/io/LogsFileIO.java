@@ -3,6 +3,7 @@ package github.myazusa.io;
 import android.content.Context;
 import android.os.Environment;
 import android.util.Log;
+import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -24,7 +25,7 @@ public class LogsFileIO extends AbstractFileIO{
 
             StringBuilder logBuilder = new StringBuilder();
             try {
-                Process process = Runtime.getRuntime().exec("logcat -d *:E");
+                Process process = Runtime.getRuntime().exec("logcat -d *:W");
                 BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(process.getInputStream()));
 
                 String line;
@@ -38,9 +39,9 @@ public class LogsFileIO extends AbstractFileIO{
 
             try( FileOutputStream fos = new FileOutputStream(externalFile)) {
                 fos.write(logBuilder.toString().getBytes());
-                Log.i(TAG,"写入文件成功");
+                Toast.makeText(context,"写入日志成功",Toast.LENGTH_SHORT).show();
             } catch (IOException e) {
-                Log.i(TAG,"写入文件失败");
+                Toast.makeText(context,"写入日志失败",Toast.LENGTH_SHORT).show();
                 e.printStackTrace();
             }
         }

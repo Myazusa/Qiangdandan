@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="图像识别">
+
+        <EditTextPreference
+            android:defaultValue="30"
+            android:key="recognizeDelayMillis"
+            android:title="图像识别时间间隔" />
+        <EditTextPreference
+            android:defaultValue="500"
+            android:key="recognizeLateDelayMillis"
+            android:title="识别成功后休息时间" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="autoScaled"
+            android:title="图像自适应屏幕" />
+    </PreferenceCategory>
+    <PreferenceCategory android:title="其他">
+
+        <EditTextPreference
+            android:defaultValue="800"
+            android:key="clickIndicatorDelayMillis"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="点击指示器显示时长" />
+        <EditTextPreference
+            android:defaultValue="40"
+            android:key="minElapsedTime"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="近期最小识图耗时" />
+        <EditTextPreference
+            android:defaultValue="900"
+            android:key="maxElapsedTime"
+            android:selectAllOnFocus="true"
+            android:singleLine="true"
+            android:title="近期最大识图耗时" />
+        <MultiSelectListPreference
+            android:entries="@array/elapsedTimeQueueEntries"
+            android:entryValues="@array/elapsedTimeQueueValues"
+            android:key="elapsedTimeQueue"
+            android:title="最近五次识图耗时队列" />
+    </PreferenceCategory>
+</PreferenceScreen>

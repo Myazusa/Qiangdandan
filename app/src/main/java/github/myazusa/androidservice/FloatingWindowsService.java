@@ -5,6 +5,7 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
@@ -27,6 +28,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Optional;
 
+import github.myazusa.config.ApplicationConfig;
 import github.myazusa.enums.ToggleStateEnum;
 import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.R;
@@ -63,6 +65,11 @@ public class FloatingWindowsService extends Service {
                     org.opencv.core.Point point = ImageRecognition.recognizeButton(QAccessibilityService.getInstance().getApplicationContext(), bitmap, R.drawable.jiedan_button);
                     if(point != null){
                         QAccessibilityService.getInstance().performClick((float) point.x, (float) point.y);
+                        try {
+                            Thread.sleep(ApplicationConfig.getInstance().getPreferences().getInt("recognizeLateDelayMillis",500));
+                        } catch (InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
                     }
                 }
             }
@@ -252,6 +259,15 @@ public class FloatingWindowsService extends Service {
         QAccessibilityService.getInstance().onInterrupt();
         Log.i(TAG,"无障碍服务已停止");
         Log.i(TAG,"----悬浮窗服务已释放完毕----");
+
+        // 写入配置
+        SharedPreferences.Editor edit = ApplicationConfig.getInstance().getPreferences().edit();
+        edit.putLong("minElapsedTime",ImageRecognition.minElapsedTime);
+        edit.putLong("maxElapsedTime",ImageRecognition.maxElapsedTime);
+        edit.putStringSet("elapsedTimeQueue",ImageRecognition.elapsedTimeQueue.convertToStringSet());
+        edit.apply();
+
+        // 写入日志
         LogsFileIO.writeLogsToExternal(this);
     }
 }

@@ -33,18 +33,33 @@ import androidx.annotation.RequiresApi;
 
 import java.nio.ByteBuffer;
 
+import github.myazusa.config.ApplicationConfig;
+
 public class CaptureService extends Service {
     private static final String TAG = CaptureService.class.getName();
     private MediaProjection mediaProjection;
     private VirtualDisplay virtualDisplay;
     private ImageReader imageReader;
-    private Handler imageHandler = new Handler(Looper.getMainLooper());
+    private final Handler imageHandler = new Handler(Looper.getMainLooper());
     private boolean imageAvailable = false;
     private Runnable captureTask;
     private boolean isTaskRunning = false;
     private final Handler captureTaskHandler = new Handler(Looper.getMainLooper());
-    private int delayMillis = 1000;
+    private final Integer delayMillis = ApplicationConfig.getInstance().getPreferences().getInt("recognizeDelayMillis",30);
     FloatingWindowsService floatingWindowsService = null;
+
+    MediaProjection.Callback callback = new MediaProjection.Callback() {
+        @Override
+        public void onStop() {
+            // 当捕获停止时执行必要的资源清理操作
+            super.onStop();
+            // 停止录制、释放资源等操作
+            if (virtualDisplay != null) {
+                virtualDisplay.release();
+                virtualDisplay = null;
+            }
+        }
+    };
     private final IBinder captureServiceBinder = new CaptureServiceBinder();
 
     public class CaptureServiceBinder extends Binder {
@@ -112,9 +127,9 @@ public class CaptureService extends Service {
                 @Override
                 public void run() {
                     if (imageAvailable){
-                        Log.d(TAG, "已截图");
                         Image image = imageReader.acquireLatestImage();
                         if (image != null) {
+                            Log.d(TAG, "已截图");
                             Bitmap bitmap = processImage(image);
                             image.close();
                             // 发送bitmap给悬浮窗服务
@@ -183,20 +198,20 @@ public class CaptureService extends Service {
     }
 
     public void startCapture() {
-        DisplayMetrics metrics = new DisplayMetrics();
-        initImageReader(metrics);
-        virtualDisplay = mediaProjection.createVirtualDisplay("抢单单截屏",
-                metrics.widthPixels, metrics.heightPixels, metrics.densityDpi,
-                DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader.getSurface(), null, null);
+        if (virtualDisplay == null){
+            DisplayMetrics metrics = new DisplayMetrics();
+            initImageReader(metrics);
+            mediaProjection.registerCallback(callback, null);
+            virtualDisplay = mediaProjection.createVirtualDisplay("抢单单截屏",
+                    metrics.widthPixels, metrics.heightPixels, metrics.densityDpi,
+                    DisplayManager.VIRTUAL_DISPLAY_FLAG_AUTO_MIRROR, imageReader.getSurface(), null, null);
+
+        } else {
+            virtualDisplay.setSurface(imageReader.getSurface());
+        }
     }
     public void stopCapture(){
-        if (virtualDisplay != null) {
-            virtualDisplay.release();
-        }
-        if (imageReader != null) {
-            imageReader.close();
-            imageReader = null;
-        }
+        virtualDisplay.setSurface(null);
     }
 
     private Bitmap processImage(Image image) {
@@ -219,8 +234,18 @@ public class CaptureService extends Service {
         super.onDestroy();
         // 释放定时截屏任务
         stopTask();
-        // 停止截图
-        stopCapture();
+
+        // 释放截图
+        if(virtualDisplay != null){
+            virtualDisplay.release();
+            virtualDisplay = null;
+            Log.i(TAG,"virtualDisplay已释放");
+        }
+        if(imageReader != null){
+            imageReader.close();
+            imageReader = null;
+            Log.i(TAG,"imageReader已释放");
+        }
         // 释放服务连接
         if (floatingWindowsService != null) {
             unbindService(connection);
