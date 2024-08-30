@@ -25,6 +25,7 @@ public class LogsFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_logs, container, false);
         createLogsTextView(view);
         createCloseLogsButton(view);
+        view.setClickable(true);
         return view;
     }
 

@@ -16,7 +16,7 @@
             android:id="@+id/windowFloatButton"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:src="@drawable/attribution__streamline_core"
+            android:src="@drawable/accessible_forward_fill__streamline_outlined_fill___material_symbols"
             app:backgroundTint="@color/my_app_accent"
             app:fabCustomSize="40dp" />
 
@@ -38,6 +38,16 @@
                 android:layout_weight="1"
                 app:backgroundTint="#5EE1BEE7"
                 app:icon="@drawable/button_play__streamline_core"
+                app:iconTint="#A1FFFFFF" />
+
+            <github.myazusa.view.ToggleButton
+                android:id="@+id/accessibilityQiangdanButton"
+                style="?attr/materialIconButtonStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                app:backgroundTint="#5EE1BEE7"
+                app:icon="@drawable/attribution__streamline_core"
                 app:iconTint="#A1FFFFFF" />
 
             <github.myazusa.view.ToggleButton

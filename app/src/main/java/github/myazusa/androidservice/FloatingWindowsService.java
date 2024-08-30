@@ -39,9 +39,12 @@ public class FloatingWindowsService extends Service {
     private static final String TAG = FloatingWindowsService.class.getName();
     private static WindowManager windowManager;
     ToggleButton qiangdanButton;
+    ToggleButton accessibilityQiangdanButton;
     private View floatingView;
     public boolean isQiangdanStart = false;
+    private Integer recognizeLateDelayMillis = null;
     private Bitmap cacheBitmap = null;
+    private org.opencv.core.Point cachePoint = null;
     CaptureService captureService = null;
     private final IBinder floatingWindowsServiceBinder = new FloatingWindowsService.FloatingWindowsServiceBinder();
     public class FloatingWindowsServiceBinder extends Binder {
@@ -59,21 +62,38 @@ public class FloatingWindowsService extends Service {
                 if(cacheBitmap == null){
                     cacheBitmap = bitmap;
                 }
+                // TODO: 是否启用图像变化再识别和坐标变化再识别应反射出去作为setting
                 if(!bitmap.equals(cacheBitmap)){
                     Log.i(TAG, "图像已变化，开始识别");
                     cacheBitmap = bitmap;
                     org.opencv.core.Point point = ImageRecognition.recognizeButton(QAccessibilityService.getInstance().getApplicationContext(), bitmap, R.drawable.jiedan_button);
                     if(point != null){
-                        QAccessibilityService.getInstance().performClick((float) point.x, (float) point.y);
-                        try {
-                            Thread.sleep(ApplicationConfig.getInstance().getPreferences().getInt("recognizeLateDelayMillis",500));
-                        } catch (InterruptedException e) {
-                            throw new RuntimeException(e);
+                        if(cachePoint == null){
+                            cachePoint = point;
+                            tryClick(point);
+                        }
+                        if (!cachePoint.equals(point)) {
+                            Log.i(TAG, "坐标已变化，开始点击");
+                            tryClick(point);
                         }
                     }
                 }
             }
         });
+    }
+    private void tryClick(org.opencv.core.Point point){
+        QAccessibilityService.getInstance().performClick((float) point.x, (float) point.y);
+            if(recognizeLateDelayMillis == null){
+                recognizeLateDelayMillis =  Integer.parseInt(ApplicationConfig.getInstance()
+                        .getPreferences().getString("recognizeLateDelayMillis","0"));
+            }
+            if(recognizeLateDelayMillis != 0){
+                try {
+                    Thread.sleep(recognizeLateDelayMillis);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+            }
     }
 
     private void sendData(){
@@ -111,6 +131,7 @@ public class FloatingWindowsService extends Service {
         createFloatingButton();
         createCloseSwitch();
         createQiangdanSwitch();
+        createAccessibilityQiangdanSwitch();
         // 绑定两个service
         bindService(new Intent(this, CaptureService.class), connection, Context.BIND_AUTO_CREATE);
         return START_STICKY;
@@ -163,17 +184,22 @@ public class FloatingWindowsService extends Service {
         });
     }
 
+    /**
+     * 创建抢单按钮，用于识图抢单
+     */
     private void createQiangdanSwitch(){
         qiangdanButton = floatingView.findViewById(R.id.qiangdanButton);
         qiangdanButton.setOnClickListener(l->{
             if(qiangdanButton.isButtonState() == ToggleStateEnum.Default){
                 qiangdanButton.setButtonToTriggered();
+                accessibilityQiangdanButton.setButtonToDisabled();
                 qiangdanButton.setIconResource(R.drawable.button_pause_2__streamline_core);
                 captureService.startCapture();
                 captureService.resumeTask();
                 isQiangdanStart = true;
             } else if (qiangdanButton.isButtonState() == ToggleStateEnum.Triggered) {
                 qiangdanButton.setButtonToDefault();
+                accessibilityQiangdanButton.setButtonToEnabled();
                 qiangdanButton.setIconResource(R.drawable.button_play__streamline_core);
                 captureService.interruptTask();
                 captureService.stopCapture();
@@ -181,6 +207,27 @@ public class FloatingWindowsService extends Service {
             }
         });
     }
+    /**
+     *
+     */
+    private void createAccessibilityQiangdanSwitch(){
+        accessibilityQiangdanButton = floatingView.findViewById(R.id.accessibilityQiangdanButton);
+        accessibilityQiangdanButton.setOnClickListener(l->{
+            if(accessibilityQiangdanButton.isButtonState() == ToggleStateEnum.Default){
+                accessibilityQiangdanButton.setButtonToTriggered();
+                qiangdanButton.setButtonToDisabled();
+                QAccessibilityService.setIsAccessibilityEventEnable(true);
+            } else if (accessibilityQiangdanButton.isButtonState() == ToggleStateEnum.Triggered) {
+                accessibilityQiangdanButton.setButtonToDefault();
+                qiangdanButton.setButtonToEnabled();
+                QAccessibilityService.setIsAccessibilityEventEnable(false);
+            }
+        });
+    }
+
+    /**
+     * 创建悬浮按钮，用于显示隐藏其他按钮
+     */
     private void createFloatingButton() {
         ImageView windowFloatButton = floatingView.findViewById(R.id.windowFloatButton);
         View view = floatingView.findViewById(R.id.functionButtonLayout);
@@ -262,8 +309,8 @@ public class FloatingWindowsService extends Service {
 
         // 写入配置
         SharedPreferences.Editor edit = ApplicationConfig.getInstance().getPreferences().edit();
-        edit.putLong("minElapsedTime",ImageRecognition.minElapsedTime);
-        edit.putLong("maxElapsedTime",ImageRecognition.maxElapsedTime);
+        edit.putString("minElapsedTime",String.valueOf(ImageRecognition.minElapsedTime));
+        edit.putString("maxElapsedTime",String.valueOf(ImageRecognition.maxElapsedTime));
         edit.putStringSet("elapsedTimeQueue",ImageRecognition.elapsedTimeQueue.convertToStringSet());
         edit.apply();
 

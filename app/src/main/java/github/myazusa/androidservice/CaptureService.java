@@ -45,7 +45,7 @@ public class CaptureService extends Service {
     private Runnable captureTask;
     private boolean isTaskRunning = false;
     private final Handler captureTaskHandler = new Handler(Looper.getMainLooper());
-    private final Integer delayMillis = ApplicationConfig.getInstance().getPreferences().getInt("recognizeDelayMillis",30);
+    private Integer recognizeDelayMillis = null;
     FloatingWindowsService floatingWindowsService = null;
 
     MediaProjection.Callback callback = new MediaProjection.Callback() {
@@ -104,6 +104,7 @@ public class CaptureService extends Service {
         // 声明前台服务
         Notification notification = createNotification();
         startForeground(1, notification);
+
     }
 
     @Override
@@ -122,6 +123,10 @@ public class CaptureService extends Service {
         return START_STICKY;
     }
     private void startCaptureTask() {
+        if(recognizeDelayMillis == null){
+            recognizeDelayMillis = Integer.parseInt(ApplicationConfig.getInstance()
+                    .getPreferences().getString("recognizeDelayMillis","10"));
+        }
         if (captureTask == null){
             captureTask = new Runnable() {
                 @Override
@@ -137,16 +142,18 @@ public class CaptureService extends Service {
                             imageAvailable = false;
                         }
                     }
-                    captureTaskHandler.postDelayed(this, delayMillis);
+                    captureTaskHandler.postDelayed(this, recognizeDelayMillis);
                 }
             };
         }
         if (!isTaskRunning && floatingWindowsService != null) {
-            captureTaskHandler.postDelayed(captureTask, delayMillis);
+            captureTaskHandler.postDelayed(captureTask, recognizeDelayMillis);
             isTaskRunning = true;
             Log.i(TAG, "截图任务已开始");
         }
-        // TODO：要处理floatingWindowsService为空的情况，为空就异常退出程序
+        if (floatingWindowsService == null){
+            throw new RuntimeException("FloatingWindowsService not found.");
+        }
     }
 
     /**
@@ -169,13 +176,15 @@ public class CaptureService extends Service {
                 startCaptureTask();
             }else {
                 if (!isTaskRunning) {
-                    captureTaskHandler.postDelayed(captureTask, delayMillis);
+                    captureTaskHandler.postDelayed(captureTask, recognizeDelayMillis);
                     isTaskRunning = true;
                     Log.i(TAG, "截图任务已继续");
                 }
             }
         }
-        // TODO：要处理floatingWindowsService为空的情况，为空就异常退出程序
+        if (floatingWindowsService == null){
+            throw new RuntimeException("FloatingWindowsService not found.");
+        }
     }
 
     /**

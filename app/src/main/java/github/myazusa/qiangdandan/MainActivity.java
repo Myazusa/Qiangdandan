@@ -10,7 +10,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.accessibility.AccessibilityManager;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -32,7 +35,9 @@ import github.myazusa.config.ApplicationConfig;
 import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.databinding.ActivityMainBinding;
 import github.myazusa.util.FragmentUtil;
+import github.myazusa.util.KeyboardUtil;
 import github.myazusa.view.LogsFragment;
+import github.myazusa.view.OptionsFragment;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = MainActivity.class.getName();
@@ -40,7 +45,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int SCREEN_CAPTURE_REQUEST_CODE = 1410;
     private ActivityMainBinding _binding;
     private Fragment logsFragment = null;
-    private Fragment optionFragment = null;
+    private Fragment optionsFragment = null;
     private Fragment helpFragment = null;
 
     static {
@@ -93,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
             FragmentUtil.switchFragment(getSupportFragmentManager(),logsFragment);
         }
         if("optionsFragment".equals(fragmentName)){
-            FragmentUtil.switchFragment(getSupportFragmentManager(),optionFragment);
+            FragmentUtil.switchFragment(getSupportFragmentManager(), optionsFragment);
         }
         if("helpFragment".equals(fragmentName)){
             FragmentUtil.switchFragment(getSupportFragmentManager(),helpFragment);
@@ -105,12 +110,20 @@ public class MainActivity extends AppCompatActivity {
 
     private void createLogsFragmentButton(){
         MaterialButton logsFragmentButton = findViewById(R.id.logsFragmentButton);
+        MaterialButton optionsFragmentButton = findViewById(R.id.optionsFragmentButton);
         logsFragmentButton.setOnClickListener(l->{
             if (logsFragment == null){
                 logsFragment = new LogsFragment();
                 getSupportFragmentManager().beginTransaction().add(R.id.fragmentSlot, logsFragment).hide(logsFragment).commit();
             }
             switchToFragment("logsFragment");
+        });
+        optionsFragmentButton.setOnClickListener(l->{
+            if (optionsFragment == null){
+                optionsFragment = new OptionsFragment();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragmentSlot, optionsFragment).hide(optionsFragment).commit();
+            }
+            switchToFragment("optionsFragment");
         });
     }
 
@@ -223,5 +236,29 @@ public class MainActivity extends AppCompatActivity {
     }
     private void loggingException() {
         LogsFileIO.writeLogsToExternal(this);
+    }
+
+    /**
+     * 清除焦点方法
+     * @param ev 触摸事件
+     *
+     * @return 清除成功true或失败false
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        View v = getCurrentFocus();
+        if (v != null && (ev.getAction() == MotionEvent.ACTION_UP || ev.getAction() == MotionEvent.ACTION_MOVE)
+                && v instanceof EditText && !v.getClass().getName().startsWith("android.webkit.")) {
+            int[] scrcoords = new int[2];
+            v.getLocationOnScreen(scrcoords);
+            float x = ev.getRawX() + v.getLeft() - scrcoords[0];
+            float y = ev.getRawY() + v.getTop() - scrcoords[1];
+
+            if (x < v.getLeft() || x >= v.getRight() || y < v.getTop() || y > v.getBottom()) {
+                KeyboardUtil.hideKeyboard(this,v);
+                v.clearFocus();
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 }

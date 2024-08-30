@@ -36,7 +36,7 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/optionFragmentButton"
+            android:id="@+id/optionsFragmentButton"
             android:layout_width="110dp"
             android:layout_height="50dp"
             app:cornerRadius="20dp"

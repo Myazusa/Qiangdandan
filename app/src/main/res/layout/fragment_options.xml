@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:padding="20dp"
+    android:background="@color/my_app_background"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <LinearLayout
         android:layout_width="match_parent"
@@ -24,4 +26,132 @@
             android:tintMode="src_atop"
             app:tint="@color/my_app_on_primary" />
     </LinearLayout>
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/recognizeDelayMillis"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:hint="图像识别时间间隔"
+            android:textColorHint="#999575CD"
+            app:boxBackgroundMode="outline"
+            app:boxBackgroundColor="@color/my_app_primary"
+            app:boxStrokeColor="#999575CD"
+            app:suffixText="毫秒"
+            app:suffixTextColor="@color/my_app_on_primary"
+            app:boxStrokeErrorColor="#99F06292"
+            app:boxStrokeWidth="2dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/recognizeDelayMillisEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="1"
+                android:inputType="number"
+                android:maxLength="6"
+                android:ems="10"
+                android:textColor="@color/my_app_on_primary"
+                android:text="0"/>
+            <TextView
+                android:id="@+id/tips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/my_app_accent"
+                android:textAlignment="textStart"
+                android:text="*识别最好根据最近识别耗时设置，以下是最近5次耗时："/>
+            <TextView
+                android:id="@+id/recognizeDelayMillisRecentDelayTips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#90CAF9"
+                android:textAlignment="textStart"
+                android:text="近五次延迟："/>
+            <TextView
+                android:id="@+id/recognizeDelayMillisMaxDelayTips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#90CAF9"
+                android:textAlignment="textStart"
+                android:text="最小识别延迟："/>
+            <TextView
+                android:id="@+id/recognizeDelayMillisMinDelayTips"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="#90CAF9"
+                android:textAlignment="textStart"
+                android:text="最大识别延迟："/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/recognizeLateDelayMillis"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:hint="识别成功后休息时间"
+            android:textColorHint="#999575CD"
+            app:boxBackgroundMode="outline"
+            app:boxBackgroundColor="@color/my_app_primary"
+            app:boxStrokeColor="#999575CD"
+            app:suffixText="毫秒"
+            app:suffixTextColor="@color/my_app_on_primary"
+            app:boxStrokeErrorColor="#99F06292"
+            app:boxStrokeWidth="2dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/recognizeLateDelayMillisEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="1"
+                android:inputType="number"
+                android:maxLength="10"
+                android:ems="10"
+                android:textColor="@color/my_app_on_primary"
+                android:text="0"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/clickIndicatorStackDelayMillis"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:paddingTop="10dp"
+            android:hint="点击标记消失延时"
+            android:textColorHint="#999575CD"
+            app:boxBackgroundMode="outline"
+            app:boxBackgroundColor="@color/my_app_primary"
+            app:boxStrokeColor="#999575CD"
+            app:suffixText="毫秒"
+            app:suffixTextColor="@color/my_app_on_primary"
+            app:boxStrokeErrorColor="#99F06292"
+            app:boxStrokeWidth="2dp">
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/clickIndicatorStackDelayMillisEditText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lines="1"
+                android:inputType="number"
+                android:maxLength="10"
+                android:ems="10"
+                android:textColor="@color/my_app_on_primary"
+                android:text="0"/>
+        </com.google.android.material.textfield.TextInputLayout>
+    </LinearLayout>
+    <!-- TODO: 把autoScaled自适应的togglebutton写完 -->
+    <!-- TODO: 把图像变化坐标变化的togglebutton写完 -->
+
+</LinearLayout>

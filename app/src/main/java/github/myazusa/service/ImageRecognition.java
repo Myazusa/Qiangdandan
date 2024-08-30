@@ -12,6 +12,9 @@ import org.opencv.core.Point;
 import org.opencv.core.Size;
 import org.opencv.imgproc.Imgproc;
 
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import github.myazusa.collection.FixedSizeQueue;
 import github.myazusa.config.ApplicationConfig;
 
@@ -21,13 +24,14 @@ public class ImageRecognition {
     private static Mat buttonMatGray = null;
     public static long maxElapsedTime = 0;
     public static long minElapsedTime = 1000000;
-    public static FixedSizeQueue<Long> elapsedTimeQueue = new FixedSizeQueue<>(5);
+    public static FixedSizeQueue<Long> elapsedTimeQueue = new FixedSizeQueue<>(Stream.of(200L, 300L, 400L, 500L, 600L).collect(Collectors.toSet()));;
 
     /**
      * 匹配方法，一般耗时200到400ms，因此请设置大于这个值
      * @param screenShot 截屏获得的图片
      * @return 匹配到图像位置的左上角坐标值
      */
+
     private static Point findButtonInBitmap(Bitmap screenShot) {
         long startTime = System.currentTimeMillis();
 
@@ -42,8 +46,8 @@ public class ImageRecognition {
         Imgproc.cvtColor(screenShotMat, screenShotMatGray, Imgproc.COLOR_BGR2GRAY);
 
         // 定义缩放比例范围
-        double minScale = 0.5;
-        double maxScale = 1.5;
+        double minScale = 0.7;
+        double maxScale = 1.3;
         double scaleStep = 0.1;
         double bestMatchValue = 0;
         Point bestMatchLoc = null;
