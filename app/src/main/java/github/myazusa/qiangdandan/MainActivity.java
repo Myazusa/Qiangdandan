@@ -1,20 +1,29 @@
 package github.myazusa.qiangdandan;
 
+import android.Manifest;
 import android.accessibilityservice.AccessibilityServiceInfo;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Paint;
+import android.content.pm.PackageManager;
 import android.media.projection.MediaProjectionManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.util.Log;
+import android.view.MotionEvent;
+import android.view.View;
 import android.view.accessibility.AccessibilityManager;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.AppCompatImageButton;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.fragment.app.Fragment;
+
+import com.google.android.material.button.MaterialButton;
 
 import org.opencv.android.OpenCVLoader;
 
@@ -22,20 +31,29 @@ import java.util.List;
 
 import github.myazusa.androidservice.CaptureService;
 import github.myazusa.androidservice.FloatingWindowsService;
+import github.myazusa.config.ApplicationConfig;
+import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.databinding.ActivityMainBinding;
+import github.myazusa.util.FragmentUtil;
+import github.myazusa.util.KeyboardUtil;
+import github.myazusa.view.LogsFragment;
+import github.myazusa.view.OptionsFragment;
 
 public class MainActivity extends AppCompatActivity {
-    private static final String _TAG = MainActivity.class.getName();
+    private static final String TAG = MainActivity.class.getName();
     private static boolean isOpencvReady = false;
     private static final int SCREEN_CAPTURE_REQUEST_CODE = 1410;
     private ActivityMainBinding _binding;
+    private Fragment logsFragment = null;
+    private Fragment optionsFragment = null;
+    private Fragment helpFragment = null;
 
     static {
         if (!OpenCVLoader.initLocal()) {
-            Log.w(_TAG, "opencv加载失败");
+            Log.w(TAG, "opencv加载失败");
         }else {
             isOpencvReady = true;
-            Log.w(_TAG, "opencv加载成功");
+            Log.w(TAG, "opencv加载成功");
         }
     }
 
@@ -50,6 +68,15 @@ public class MainActivity extends AppCompatActivity {
         _binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(_binding.getRoot());
 
+        // 设置config初始值
+        ApplicationConfig.initApplicationConfig(this);
+        ApplicationConfig.
+                getInstance().
+                setDefaultPreferences(this,R.xml.default_preferences);
+
+        createGlobalExceptionHandler();
+        createStartFloatingWindowsButtonSwitch();
+
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
@@ -57,12 +84,47 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, "opencv未能正常加载", Toast.LENGTH_SHORT).show();
             exit();
         }
-        createStartFloatingWindowsButtonSwitch();
+
+        checkExternalPermission();
+        createLogsFragmentButton();
     }
 
     @Override
     protected void onStart() {
         super.onStart();
+    }
+    public void switchToFragment(String fragmentName){
+        if("logsFragment".equals(fragmentName)){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),logsFragment);
+        }
+        if("optionsFragment".equals(fragmentName)){
+            FragmentUtil.switchFragment(getSupportFragmentManager(), optionsFragment);
+        }
+        if("helpFragment".equals(fragmentName)){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),helpFragment);
+        }
+        if(fragmentName == null){
+            FragmentUtil.switchFragment(getSupportFragmentManager(),null);
+        }
+    }
+
+    private void createLogsFragmentButton(){
+        MaterialButton logsFragmentButton = findViewById(R.id.logsFragmentButton);
+        MaterialButton optionsFragmentButton = findViewById(R.id.optionsFragmentButton);
+        logsFragmentButton.setOnClickListener(l->{
+            if (logsFragment == null){
+                logsFragment = new LogsFragment();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragmentSlot, logsFragment).hide(logsFragment).commit();
+            }
+            switchToFragment("logsFragment");
+        });
+        optionsFragmentButton.setOnClickListener(l->{
+            if (optionsFragment == null){
+                optionsFragment = new OptionsFragment();
+                getSupportFragmentManager().beginTransaction().add(R.id.fragmentSlot, optionsFragment).hide(optionsFragment).commit();
+            }
+            switchToFragment("optionsFragment");
+        });
     }
 
     /**
@@ -83,6 +145,12 @@ public class MainActivity extends AppCompatActivity {
                 requestOverlayPermission();
             }
         });
+    }
+    private void checkExternalPermission(){
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+        }
     }
 
     /**
@@ -120,7 +188,7 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         }
-        Log.i(_TAG, "无障碍权限未获取");
+        Log.i(TAG, "无障碍权限未获取");
         return false;
     }
 
@@ -153,10 +221,44 @@ public class MainActivity extends AppCompatActivity {
                 startService(captureServiceIntent);
             }
             startService(new Intent(getApplicationContext(), FloatingWindowsService.class));
-            Log.d(_TAG,"全部权限已获取，开启悬浮窗");
+            Log.d(TAG,"全部权限已获取，开启悬浮窗");
             finishAffinity();
         }else {
             Toast.makeText(this, "截屏权限未获取", Toast.LENGTH_SHORT).show();
         }
+    }
+    private void createGlobalExceptionHandler(){
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            // 处理未捕获的异常
+            Log.e(TAG, "出现未捕获的异常: " + t.getName(), e);
+            loggingException();
+        });
+    }
+    private void loggingException() {
+        LogsFileIO.writeLogsToExternal(this);
+    }
+
+    /**
+     * 清除焦点方法
+     * @param ev 触摸事件
+     *
+     * @return 清除成功true或失败false
+     */
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        View v = getCurrentFocus();
+        if (v != null && (ev.getAction() == MotionEvent.ACTION_UP || ev.getAction() == MotionEvent.ACTION_MOVE)
+                && v instanceof EditText && !v.getClass().getName().startsWith("android.webkit.")) {
+            int[] scrcoords = new int[2];
+            v.getLocationOnScreen(scrcoords);
+            float x = ev.getRawX() + v.getLeft() - scrcoords[0];
+            float y = ev.getRawY() + v.getTop() - scrcoords[1];
+
+            if (x < v.getLeft() || x >= v.getRight() || y < v.getTop() || y > v.getBottom()) {
+                KeyboardUtil.hideKeyboard(this,v);
+                v.clearFocus();
+            }
+        }
+        return super.dispatchTouchEvent(ev);
     }
 }

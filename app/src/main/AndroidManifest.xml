@@ -24,6 +24,7 @@
         android:roundIcon="@drawable/accessible_forward_fill__streamline_outlined_fill___material_symbols"
         android:supportsRtl="true"
         android:theme="@style/Theme.Qiangdandan"
+        android:hardwareAccelerated="true"
         tools:targetApi="31">
         <activity android:name=".MainActivity"
             android:exported="true">

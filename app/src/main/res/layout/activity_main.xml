@@ -36,13 +36,35 @@
         app:layout_constraintStart_toStartOf="parent">
 
         <com.google.android.material.button.MaterialButton
-            android:id="@+id/optionButton"
-            android:layout_width="150dp"
+            android:id="@+id/optionsFragmentButton"
+            android:layout_width="110dp"
             android:layout_height="50dp"
             app:cornerRadius="20dp"
+            android:layout_margin="5dp"
             android:layout_gravity="center"
             android:text="设置"
             app:icon="@drawable/cog__streamline_core" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/logsFragmentButton"
+            android:layout_width="110dp"
+            android:layout_height="50dp"
+            app:cornerRadius="20dp"
+            android:layout_margin="5dp"
+            android:layout_gravity="center"
+            android:text="日志"
+            app:icon="@drawable/multiple_file_2__streamline_core" />
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/helpFragmentButton"
+            android:layout_width="110dp"
+            android:layout_height="50dp"
+            app:cornerRadius="20dp"
+            android:layout_margin="5dp"
+            android:layout_gravity="center"
+            android:text="帮助"
+            app:icon="@drawable/help_question_1__streamline_core" />
     </LinearLayout>
-
+    <FrameLayout
+        android:id="@+id/fragmentSlot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

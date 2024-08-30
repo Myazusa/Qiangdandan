@@ -12,14 +12,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
 import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.Stack;
 
+import github.myazusa.config.ApplicationConfig;
 import github.myazusa.qiangdandan.R;
+import github.myazusa.util.TraverseNodeUtil;
 
 public class QAccessibilityService extends AccessibilityService {
     private final static String TAG = QAccessibilityService.class.getName();
     private Stack<View> clickIndicatorStack = new Stack<>();
+    private static boolean isAccessibilityEventEnable = false;
+    private Integer clickIndicatorStackDelayMillis = null;
     @SuppressLint("StaticFieldLeak")
     private static QAccessibilityService instance = null;
     public static QAccessibilityService getInstance(){
@@ -50,6 +57,10 @@ public class QAccessibilityService extends AccessibilityService {
      * @param y 坐标
      */
     private void showClickIndicator(float x, float y) {
+        if(clickIndicatorStackDelayMillis == null){
+            clickIndicatorStackDelayMillis = Integer.parseInt(ApplicationConfig.getInstance()
+                    .getPreferences().getString("clickIndicatorDelayMillis","800"));
+        }
         LayoutInflater inflater = LayoutInflater.from(this);
 
         View clickIndicator = inflater.inflate(R.layout.click_indicator_layout, null);
@@ -68,18 +79,21 @@ public class QAccessibilityService extends AccessibilityService {
         params.x = (int) x - 50;
         params.y = (int) y - 50;
 
-        // TODO: 这里可能需要判空
         // 添加点击标记到屏幕
         FloatingWindowsService.getWindowManager().addView(clickIndicator, params);
         clickIndicatorStack.push(clickIndicator);
 
-        // TODO: 这里可以反射出去作为setting
+
         // 延时移除点击标记
         new Handler().postDelayed(() -> {
             if (!clickIndicatorStack.isEmpty()) {
                 FloatingWindowsService.getWindowManager().removeView(clickIndicatorStack.pop());
             }
-        }, 500);
+        }, clickIndicatorStackDelayMillis);
+    }
+
+    public static void setIsAccessibilityEventEnable(boolean isAccessibilityEventEnable) {
+        QAccessibilityService.isAccessibilityEventEnable = isAccessibilityEventEnable;
     }
 
     @Override
@@ -90,7 +104,33 @@ public class QAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
-
+        if (isAccessibilityEventEnable){
+            int changeType = event.getEventType();
+            // 判断是窗口内内容变化事件
+            if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
+                // 并且必须是节点发生变化的事件
+                if((changeType & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE) != 0){
+                    AccessibilityNodeInfo accessibilityNodeInfo = event.getSource();
+                    List<AccessibilityNodeInfo> infos = accessibilityNodeInfo.findAccessibilityNodeInfosByText("接单");
+                    if (infos != null){
+                        for (AccessibilityNodeInfo info :infos) {
+                            if (info != null){
+                                // 自身是否可以点击
+                                Optional.ofNullable(TraverseNodeUtil.traverseSelf(info)).ifPresent(i->{
+                                    i.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                                    Log.i(TAG,"点击自己成功");
+                                });
+                                // 否则向上查找可以点击的父节点
+                                Optional.ofNullable(TraverseNodeUtil.traverseParent(info)).ifPresent(i->{
+                                    i.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                                    Log.i(TAG,"点击父节点成功");
+                                });
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @Override
