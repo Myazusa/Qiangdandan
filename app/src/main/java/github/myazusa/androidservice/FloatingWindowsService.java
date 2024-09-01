@@ -38,10 +38,16 @@ import github.myazusa.view.ToggleButton;
 public class FloatingWindowsService extends Service {
     private static final String TAG = FloatingWindowsService.class.getName();
     private static WindowManager windowManager;
+    private WindowManager.LayoutParams layoutParams;
     ToggleButton qiangdanButton;
     ToggleButton accessibilityQiangdanButton;
     private View floatingView;
+    private static boolean isFloatingWindowAdded = false;
     public boolean isQiangdanStart = false;
+    private Boolean clickBlock = ApplicationConfig.getInstance()
+            .getPreferences().getBoolean("clickBlock",true);
+    private Boolean imageBlock = ApplicationConfig.getInstance()
+            .getPreferences().getBoolean("imageBlock",true);
     private Integer recognizeLateDelayMillis = null;
     private Bitmap cacheBitmap = null;
     private org.opencv.core.Point cachePoint = null;
@@ -62,8 +68,8 @@ public class FloatingWindowsService extends Service {
                 if(cacheBitmap == null){
                     cacheBitmap = bitmap;
                 }
-                // TODO: 是否启用图像变化再识别和坐标变化再识别应反射出去作为setting
-                if(!bitmap.equals(cacheBitmap)){
+
+                if(!bitmap.equals(cacheBitmap) && imageBlock){
                     Log.i(TAG, "图像已变化，开始识别");
                     cacheBitmap = bitmap;
                     org.opencv.core.Point point = ImageRecognition.recognizeButton(QAccessibilityService.getInstance().getApplicationContext(), bitmap, R.drawable.jiedan_button);
@@ -72,7 +78,7 @@ public class FloatingWindowsService extends Service {
                             cachePoint = point;
                             tryClick(point);
                         }
-                        if (!cachePoint.equals(point)) {
+                        if (!cachePoint.equals(point) && clickBlock) {
                             Log.i(TAG, "坐标已变化，开始点击");
                             tryClick(point);
                         }
@@ -127,26 +133,32 @@ public class FloatingWindowsService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        initFloatingView();
-        createFloatingButton();
-        createCloseSwitch();
-        createQiangdanSwitch();
-        createAccessibilityQiangdanSwitch();
-        // 绑定两个service
-        bindService(new Intent(this, CaptureService.class), connection, Context.BIND_AUTO_CREATE);
-        return START_STICKY;
+        if(!isFloatingWindowAdded){
+            initFloatingView();
+            createFloatingButton();
+            createCloseSwitch();
+            createQiangdanSwitch();
+            createAccessibilityQiangdanSwitch();
+            // 如果再次创建会更新无障碍服务的值
+            QAccessibilityService.updateLockingLevelToggleState();
+            // 绑定两个service
+            bindService(new Intent(this, CaptureService.class), connection, Context.BIND_AUTO_CREATE);
+            return START_STICKY;
+        }else {
+            return START_NOT_STICKY;
+        }
     }
 
     /**
      * 初始化悬浮窗本体
      */
     private void initFloatingView() {
-        if(windowManager == null) {
+        if (windowManager == null) {
             windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         }
         Display display = windowManager.getDefaultDisplay();
         display.getSize(new Point());
-        WindowManager.LayoutParams layoutParams = getLayoutParams();
+        layoutParams = getLayoutParams();
 
         // 使用ContextThemeWrapper将Activity的主题应用到悬浮窗视图
         ContextThemeWrapper contextThemeWrapper = new ContextThemeWrapper(this, R.style.Theme_Qiangdandan);
@@ -156,32 +168,7 @@ public class FloatingWindowsService extends Service {
         if (floatingView != null) {
             windowManager.addView(floatingView, layoutParams);
         }
-
-        // 设置拖动
-        floatingView.setOnTouchListener(new View.OnTouchListener() {
-            private int initialX;
-            private int initialY;
-            private float initialTouchX;
-            private float initialTouchY;
-
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                switch (event.getAction()) {
-                    case MotionEvent.ACTION_DOWN:
-                        initialX = layoutParams.x;
-                        initialY = layoutParams.y;
-                        initialTouchX = event.getRawX();
-                        initialTouchY = event.getRawY();
-                        return true;
-                    case MotionEvent.ACTION_MOVE:
-                        layoutParams.x = initialX + (int) (event.getRawX() - initialTouchX);
-                        layoutParams.y = initialY + (int) (event.getRawY() - initialTouchY);
-                        windowManager.updateViewLayout(floatingView, layoutParams);
-                        return true;
-                }
-                return false;
-            }
-        });
+        isFloatingWindowAdded = true;
     }
 
     /**
@@ -239,7 +226,6 @@ public class FloatingWindowsService extends Service {
                 view.setVisibility(View.GONE);
             }
         });
-
     }
 
     /**
@@ -304,6 +290,7 @@ public class FloatingWindowsService extends Service {
             Log.i(TAG,"FloatingWindowsService已和截屏服务断开连接");
         }
         QAccessibilityService.getInstance().onInterrupt();
+        isFloatingWindowAdded = false;
         Log.i(TAG,"无障碍服务已停止");
         Log.i(TAG,"----悬浮窗服务已释放完毕----");
 

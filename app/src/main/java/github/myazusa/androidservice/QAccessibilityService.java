@@ -26,11 +26,15 @@ public class QAccessibilityService extends AccessibilityService {
     private final static String TAG = QAccessibilityService.class.getName();
     private Stack<View> clickIndicatorStack = new Stack<>();
     private static boolean isAccessibilityEventEnable = false;
+    private static int lockingLevelToggleState = 1;
     private Integer clickIndicatorStackDelayMillis = null;
     @SuppressLint("StaticFieldLeak")
     private static QAccessibilityService instance = null;
     public static QAccessibilityService getInstance(){
         return instance;
+    }
+    public static void updateLockingLevelToggleState(){
+        lockingLevelToggleState = Integer.parseInt(ApplicationConfig.getInstance().getPreferences().getString("lockingLevel","1"));
     }
 
     /**
@@ -106,28 +110,44 @@ public class QAccessibilityService extends AccessibilityService {
     public void onAccessibilityEvent(AccessibilityEvent event) {
         if (isAccessibilityEventEnable){
             int changeType = event.getEventType();
-            // 判断是窗口内内容变化事件
-            if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
-                // 并且必须是节点发生变化的事件
-                if((changeType & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE) != 0){
-                    AccessibilityNodeInfo accessibilityNodeInfo = event.getSource();
-                    List<AccessibilityNodeInfo> infos = accessibilityNodeInfo.findAccessibilityNodeInfosByText("接单");
-                    if (infos != null){
-                        for (AccessibilityNodeInfo info :infos) {
-                            if (info != null){
-                                // 自身是否可以点击
-                                Optional.ofNullable(TraverseNodeUtil.traverseSelf(info)).ifPresent(i->{
-                                    i.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                                    Log.i(TAG,"点击自己成功");
-                                });
-                                // 否则向上查找可以点击的父节点
-                                Optional.ofNullable(TraverseNodeUtil.traverseParent(info)).ifPresent(i->{
-                                    i.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                                    Log.i(TAG,"点击父节点成功");
-                                });
-                            }
+            AccessibilityNodeInfo accessibilityNodeInfo = event.getSource();
+            switch (lockingLevelToggleState){
+                case 0:
+                    if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && accessibilityNodeInfo != null){
+                        // 并且必须是节点发生变化的事件
+                        if((changeType & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE) != 0){
+                            accessibilityAction(accessibilityNodeInfo);
                         }
                     }
+                    break;
+                case 1:
+                    if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && accessibilityNodeInfo != null){
+                        accessibilityAction(accessibilityNodeInfo);
+                    }
+                case 2:
+                    if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
+                        // 传入根节点
+                        accessibilityAction(getRootInActiveWindow());
+                    }
+            }
+        }
+    }
+
+    private void accessibilityAction(AccessibilityNodeInfo accessibilityNodeInfo){
+        List<AccessibilityNodeInfo> infos = accessibilityNodeInfo.findAccessibilityNodeInfosByText("接单");
+        if (infos != null){
+            for (AccessibilityNodeInfo info :infos) {
+                if (info != null){
+                    // 自身是否可以点击
+                    Optional.ofNullable(TraverseNodeUtil.traverseSelf(info)).ifPresent(i->{
+                        i.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        Log.i(TAG,"点击自己成功");
+                    });
+                    // 否则向上查找可以点击的父节点
+                    Optional.ofNullable(TraverseNodeUtil.traverseParent(info)).ifPresent(i->{
+                        i.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        Log.i(TAG,"点击父节点成功");
+                    });
                 }
             }
         }
