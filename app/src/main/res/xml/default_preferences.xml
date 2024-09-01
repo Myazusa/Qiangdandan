@@ -13,6 +13,18 @@
             android:defaultValue="true"
             android:key="autoScaled"
             android:title="图像自适应屏幕" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="imageBlock"
+            android:title="开启同图像阻断" />
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="clickBlock"
+            android:title="同位点击阻断" />
+        <EditTextPreference
+            android:defaultValue="1"
+            android:key="lockingLevel"
+            android:title="物件锁定等级" />
     </PreferenceCategory>
     <PreferenceCategory android:title="其他">
         <EditTextPreference

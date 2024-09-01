@@ -24,6 +24,8 @@ public class ImageRecognition {
     private static Mat buttonMatGray = null;
     public static long maxElapsedTime = 0;
     public static long minElapsedTime = 1000000;
+    private static Boolean autoScaled = Boolean.valueOf(ApplicationConfig.getInstance()
+            .getPreferences().getBoolean("autoScaled",true));
     public static FixedSizeQueue<Long> elapsedTimeQueue = new FixedSizeQueue<>(Stream.of(200L, 300L, 400L, 500L, 600L).collect(Collectors.toSet()));;
 
     /**
@@ -128,7 +130,7 @@ public class ImageRecognition {
     private static Bitmap getBitmapFromResource(Context context,int resId) {
         BitmapFactory.Options options = new BitmapFactory.Options();
         // 开启自适应屏幕dpi缩放
-        options.inScaled = ApplicationConfig.getInstance().getPreferences().getBoolean("autoScaled",true);
+        options.inScaled = autoScaled;
         return BitmapFactory.decodeResource(context.getResources(), resId,options);
     }
 }
