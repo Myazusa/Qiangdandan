@@ -68,6 +68,7 @@ public class FloatingWindowsService extends Service {
                 if(cacheBitmap == null){
                     cacheBitmap = bitmap;
                 }
+
                 if(!bitmap.equals(cacheBitmap) && imageBlock){
                     Log.i(TAG, "图像已变化，开始识别");
                     cacheBitmap = bitmap;

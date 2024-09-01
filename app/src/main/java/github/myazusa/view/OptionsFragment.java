@@ -18,7 +18,6 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputEditText;
-
 import java.util.HashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,6 +43,7 @@ public class OptionsFragment extends Fragment {
     private MaterialButton lockingLevelFast;
     private MaterialButton lockingLevelMiddle;
     private MaterialButton lockingLevelSlow;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
@@ -137,6 +137,7 @@ public class OptionsFragment extends Fragment {
         SharedPreferences preferences = ApplicationConfig.getInstance().getPreferences();
         preferences.edit().putBoolean(key,value).apply();
     }
+
     private void createRecognizeDelayMillisRecentDelayTips(){
         recognizeDelayMillisRecentDelayTips = view.findViewById(R.id.recognizeDelayMillisRecentDelayTips);
         StringBuilder stringBuilder = new StringBuilder("近五次延迟：");
