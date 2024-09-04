@@ -1,6 +1,7 @@
 package github.myazusa.androidservice;
 
 import android.accessibilityservice.AccessibilityService;
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.accessibilityservice.GestureDescription;
 import android.annotation.SuppressLint;
 import android.graphics.Path;
@@ -27,6 +28,7 @@ public class QAccessibilityService extends AccessibilityService {
     private Stack<View> clickIndicatorStack = new Stack<>();
     private static boolean isAccessibilityEventEnable = false;
     private static int lockingLevelToggleState = 1;
+    private static AccessibilityNodeInfo rootInActiveWindow;
     private Integer clickIndicatorStackDelayMillis = null;
     @SuppressLint("StaticFieldLeak")
     private static QAccessibilityService instance = null;
@@ -65,35 +67,37 @@ public class QAccessibilityService extends AccessibilityService {
             clickIndicatorStackDelayMillis = Integer.parseInt(ApplicationConfig.getInstance()
                     .getPreferences().getString("clickIndicatorDelayMillis","800"));
         }
-        LayoutInflater inflater = LayoutInflater.from(this);
+        if (clickIndicatorStackDelayMillis > 0){
+            LayoutInflater inflater = LayoutInflater.from(this);
 
-        View clickIndicator = inflater.inflate(R.layout.click_indicator_layout, null);
+            View clickIndicator = inflater.inflate(R.layout.click_indicator_layout, null);
 
-        // 设置悬浮窗的布局参数
-        WindowManager.LayoutParams params = new WindowManager.LayoutParams(
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.WRAP_CONTENT,
-                WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
-                WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
-                PixelFormat.TRANSLUCENT);
+            // 设置悬浮窗的布局参数
+            WindowManager.LayoutParams params = new WindowManager.LayoutParams(
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.WRAP_CONTENT,
+                    WindowManager.LayoutParams.TYPE_APPLICATION_OVERLAY,
+                    WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE | WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS,
+                    PixelFormat.TRANSLUCENT);
 
-        // 设置点击标记的位置
-        params.gravity = Gravity.TOP | Gravity.LEFT;
-        // 偏移量确保圆心对准点击位置
-        params.x = (int) x - 50;
-        params.y = (int) y - 50;
+            // 设置点击标记的位置
+            params.gravity = Gravity.TOP | Gravity.LEFT;
+            // 偏移量确保圆心对准点击位置
+            params.x = (int) x - 50;
+            params.y = (int) y - 50;
 
-        // 添加点击标记到屏幕
-        FloatingWindowsService.getWindowManager().addView(clickIndicator, params);
-        clickIndicatorStack.push(clickIndicator);
+            // 添加点击标记到屏幕
+            FloatingWindowsService.getWindowManager().addView(clickIndicator, params);
+            clickIndicatorStack.push(clickIndicator);
 
 
-        // 延时移除点击标记
-        new Handler().postDelayed(() -> {
-            if (!clickIndicatorStack.isEmpty()) {
-                FloatingWindowsService.getWindowManager().removeView(clickIndicatorStack.pop());
-            }
-        }, clickIndicatorStackDelayMillis);
+            // 延时移除点击标记
+            new Handler().postDelayed(() -> {
+                if (!clickIndicatorStack.isEmpty()) {
+                    FloatingWindowsService.getWindowManager().removeView(clickIndicatorStack.pop());
+                }
+            }, clickIndicatorStackDelayMillis);
+        }
     }
 
     public static void setIsAccessibilityEventEnable(boolean isAccessibilityEventEnable) {
@@ -108,11 +112,16 @@ public class QAccessibilityService extends AccessibilityService {
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
+        int changeType = event.getEventType();
+        if(changeType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED){
+            rootInActiveWindow = getRootInActiveWindow();
+        }
         if (isAccessibilityEventEnable){
-            int changeType = event.getEventType();
             AccessibilityNodeInfo accessibilityNodeInfo = event.getSource();
+
             switch (lockingLevelToggleState){
                 case 0:
+                    Log.i(TAG,"物件锁定等级低");
                     if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && accessibilityNodeInfo != null){
                         // 并且必须是节点发生变化的事件
                         if((changeType & AccessibilityEvent.CONTENT_CHANGE_TYPE_SUBTREE) != 0){
@@ -121,14 +130,20 @@ public class QAccessibilityService extends AccessibilityService {
                     }
                     break;
                 case 1:
+                    Log.i(TAG,"物件锁定等级中");
                     if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && accessibilityNodeInfo != null){
                         accessibilityAction(accessibilityNodeInfo);
                     }
+                    break;
                 case 2:
-                    if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
+                    Log.i(TAG,"物件锁定等级高");
+                    if (changeType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED && rootInActiveWindow != null){
                         // 传入根节点
-                        accessibilityAction(getRootInActiveWindow());
+                        accessibilityAction(rootInActiveWindow);
                     }
+                    break;
+                default:
+                    break;
             }
         }
     }

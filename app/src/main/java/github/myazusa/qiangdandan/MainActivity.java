@@ -31,6 +31,7 @@ import java.util.List;
 
 import github.myazusa.androidservice.CaptureService;
 import github.myazusa.androidservice.FloatingWindowsService;
+import github.myazusa.androidservice.QAccessibilityService;
 import github.myazusa.config.ApplicationConfig;
 import github.myazusa.io.LogsFileIO;
 import github.myazusa.qiangdandan.databinding.ActivityMainBinding;
@@ -182,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private boolean checkAccessibilityServicePermission() {
         AccessibilityManager accessibilityManager = (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
-        List<AccessibilityServiceInfo> enabledAccessibilityServiceList = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_SPOKEN);
+        List<AccessibilityServiceInfo> enabledAccessibilityServiceList = accessibilityManager.getEnabledAccessibilityServiceList(AccessibilityServiceInfo.FEEDBACK_ALL_MASK);
         for (AccessibilityServiceInfo info : enabledAccessibilityServiceList) {
             if (info.getResolveInfo().serviceInfo.packageName.equals(getPackageName())) {
                 return true;

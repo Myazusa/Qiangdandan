@@ -179,14 +179,12 @@ public class FloatingWindowsService extends Service {
         qiangdanButton.setOnClickListener(l->{
             if(qiangdanButton.isButtonState() == ToggleStateEnum.Default){
                 qiangdanButton.setButtonToTriggered();
-                accessibilityQiangdanButton.setButtonToDisabled();
                 qiangdanButton.setIconResource(R.drawable.button_pause_2__streamline_core);
                 captureService.startCapture();
                 captureService.resumeTask();
                 isQiangdanStart = true;
             } else if (qiangdanButton.isButtonState() == ToggleStateEnum.Triggered) {
                 qiangdanButton.setButtonToDefault();
-                accessibilityQiangdanButton.setButtonToEnabled();
                 qiangdanButton.setIconResource(R.drawable.button_play__streamline_core);
                 captureService.interruptTask();
                 captureService.stopCapture();
@@ -202,11 +200,9 @@ public class FloatingWindowsService extends Service {
         accessibilityQiangdanButton.setOnClickListener(l->{
             if(accessibilityQiangdanButton.isButtonState() == ToggleStateEnum.Default){
                 accessibilityQiangdanButton.setButtonToTriggered();
-                qiangdanButton.setButtonToDisabled();
                 QAccessibilityService.setIsAccessibilityEventEnable(true);
             } else if (accessibilityQiangdanButton.isButtonState() == ToggleStateEnum.Triggered) {
                 accessibilityQiangdanButton.setButtonToDefault();
-                qiangdanButton.setButtonToEnabled();
                 QAccessibilityService.setIsAccessibilityEventEnable(false);
             }
         });
